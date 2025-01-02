@@ -50,6 +50,7 @@
             padding: 20px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             border-radius: 10px;
+            margin-top: auto;
         }
         
         section {
@@ -87,6 +88,12 @@
         .fine-form input {
             margin-bottom: 10px;
         }
+
+        fieldset {
+            max-height: 200px;
+            overflow-y: scroll;
+            padding: 10px;
+        }
     </style>
 </head>
 <body>
@@ -114,7 +121,7 @@
         <div class="t2">
             <b>車輛資料</b><br>
             掛牌日期：{{ person_data['registration_date'] }}<br>
-            <fieldset style="height: 100px; background: white;">
+            <fieldset>
                 <legend>違規紀錄：</legend>
                 {% for record in violation_data %}
                     日期：{{ record['date'] }}，地點：{{ record['location'] }}，描述：{{ record['description'] }}，罰款：{{ record['fine_amount'] }}<br>
