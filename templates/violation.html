@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新增違規紀錄</title>
+    <style>
+        body {
+            background-color: #fdfbe7;
+            margin: 0;
+            text-align: left;
+        }
+        header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            top: 0;
+            width: 100%;
+            height: 60px;
+            background-color: #fdfbe7;
+        }
+        b {
+            font-size: larger;
+        }
+        .t1 {
+            font-size: medium;
+        }
+        main {
+            margin: 10px 100px 20px 100px;
+            background: white;
+            padding: 20px 100px 20px 100px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            line-height: 1.8;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <b>新增違規紀錄</b>
+    </header>
+    <main>
+        <b class="t1">違規紀錄：</b><br>
+        <form id="recordForm" action="/save_record" method="POST" onsubmit="return handleSubmit(event)">
+            &nbsp; &nbsp; 車輛號碼：<input type="text" name="vehicle_number"><br>
+            &nbsp; &nbsp; 車主名稱：<input type="text" name="owner_name"><br>
+            &nbsp; &nbsp; 日期：<input type="date" name="date" value="2024-12-25" min="2020-01-01" max="2025-12-31"><br>
+            <br>
+            <b class="t1">詳細資訊：</b><br>
+            &nbsp; &nbsp; 照片：<input type="file" name="photo"><br>
+            &nbsp; &nbsp; 事發地點：<input type="text" name="location"><br>
+            &nbsp; &nbsp; 行為描述：<input type="text" name="description"><br>
+            <br>
+            <b class="t1">處罰內容：</b><br>
+            &nbsp; &nbsp; 罰款金額：<input type="radio" name="fine_amount" value="600">$600 
+            <input type="radio" name="fine_amount" value="1200">$1200 
+            <input type="radio" name="fine_amount" value="2000">$2000<br>
+            <button type="submit">確認</button>
+        </form>
+    </main>
+    <script>
+        function handleSubmit(event) {
+            event.preventDefault();
+            var form = document.getElementById('recordForm');
+            var formData = new FormData(form);
+
+            fetch('/save_record', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      alert('資料已成功提交！');
+                  } else {
+                      alert('提交資料失敗，請重試。');
+                  }
+              });
+        }
+    </script>
+</body>
+</html>
