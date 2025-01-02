@@ -3,11 +3,11 @@ import psycopg2
 
 app = Flask(__name__)
 
-# 配置 PostgreSQL 連接，請填入你的使用者名稱和密碼
+# Configure PostgreSQL connection
 db = psycopg2.connect(
     host="localhost",
     user="postgres",
-    password="1234",  # 這裡填入你的 PostgreSQL 密碼
+    password="1234",  # Replace with your PostgreSQL password
     database="violations_db"
 )
 
@@ -26,7 +26,7 @@ def save_record():
     
     cursor = db.cursor()
     cursor.execute("""
-        INSERT INTO violation_records (vehicle_number, owner_name, date, location, description, fine_amount)
+        INSERT INTO violation_records (license_plate, owner_name, date, location, description, fine_amount)
         VALUES (%s, %s, %s, %s, %s, %s)
     """, (vehicle_number, owner_name, date, location, description, fine_amount))
     db.commit()

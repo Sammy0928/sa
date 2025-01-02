@@ -79,13 +79,21 @@
             font-size: medium;
             line-height: 1.8;
         }
+
+        .fine-form {
+            margin-top: 20px;
+        }
+
+        .fine-form input {
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
     <header>
         <b>車籍資料系統</b>
         <form method="get">
-            <input type="text" name="vehicle_number" value="{{ vehicle_number }}" height="20px">
+            <input type="text" name="license_plate" value="{{ license_plate }}" height="20px">
             <button type="submit">搜尋</button>
         </form>
     </header>
@@ -93,7 +101,7 @@
         <section>
             <div>
                 <img src="{{ person_data['photo_url'] }}" alt="車主照片" width="100px" height="100px"><br>
-                <u>{{ person_data['id_number'] }}</u>
+                <u>{{ person_data['license_plate'] }}</u>
             </div>
             <div class="t1">
                 姓名：{{ person_data['owner_name'] }}<br>
@@ -113,6 +121,38 @@
                 {% endfor %}
             </fieldset>
         </div>
+        <!-- New Fine Ticket Form -->
+        <div class="fine-form">
+            <b>生成罰單</b>
+            <form action="/generate_fine" method="POST" onsubmit="return handleSubmit(event)">
+                <input type="hidden" name="license_plate" value="{{ license_plate }}">
+                <input type="hidden" name="owner_name" value="{{ person_data['owner_name'] }}">
+                日期：<input type="date" name="date" required><br>
+                地點：<input type="text" name="location" required><br>
+                描述：<input type="text" name="description" required><br>
+                罰款金額：<input type="number" name="fine_amount" required><br>
+                <button type="submit">生成罰單</button>
+            </form>
+        </div>
     </main>
+    <script>
+        function handleSubmit(event) {
+            event.preventDefault();
+            var form = event.target;
+            var formData = new FormData(form);
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      alert('罰單已成功生成！');
+                  } else {
+                      alert('生成罰單失敗，請重試。');
+                  }
+              });
+        }
+    </script>
 </body>
 </html>
