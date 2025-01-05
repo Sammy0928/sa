@@ -1,0 +1,4 @@
+train: C:/Users/user/Documents/GitHub/sa/SA/train/images
+val: C:/Users/user/Documents/GitHub/sa/SA/valid/images
+nc: 1
+names: ['license']
