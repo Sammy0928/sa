@@ -1,4 +1,4 @@
-train: C:/Users/huang/OneDrive/桌面/SA/train/images
-val: C:/Users/huang/OneDrive/桌面/SA/valid/images
+train: C:/Users/user/Documents/GitHub/sa/SA/train/images
+val: C:/Users/user/Documents/GitHub/sa/SA/valid/images
 nc: 1
 names: ['license']

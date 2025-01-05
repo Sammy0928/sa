@@ -18,11 +18,11 @@ if __name__ == '__main__':
     print(f"已創建權重目錄：{weights_dir}")
 
     # 檢查配置文件
-    if not os.path.exists('./data.yaml'):
+    if not os.path.exists('C:/Users/user/Documents/GitHub/sa/SA/data.yaml'):
         raise FileNotFoundError("配置文件 './data.yaml' 不存在，請檢查路徑！")
 
     # 檢查模型文件
-    if not os.path.exists('yolov8n.pt'):
+    if not os.path.exists('C:/Users/user/Documents/GitHub/sa/SA/yolov8n.pt'):
         raise FileNotFoundError("模型文件 'yolov8n.pt' 不存在，請檢查路徑或下載！")
 
     # 加載模型
@@ -32,10 +32,10 @@ if __name__ == '__main__':
 
     # 開始訓練
     model.train(
-    data='./data.yaml',
+    data='C:/Users/user/Documents/GitHub/sa/SA/data.yaml',
     epochs=1,
-    imgsz=512,
-    batch=8,
+    imgsz=448,
+    batch=120,
     save_dir=save_dir
 )
 
