@@ -1,0 +1,4 @@
+train: C:/Users/huang/OneDrive/桌面/SA/train/images
+val: C:/Users/huang/OneDrive/桌面/SA/valid/images
+nc: 1
+names: ['license']
