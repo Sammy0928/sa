@@ -2,145 +2,149 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>車輛違規系統</title>
+    <title>車籍資料系統</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
+            background-color: #f8f8f8;
             margin: 0;
-            padding: 20px;
-            color: #333;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
 
-        h1 {
-            text-align: center;
-            color: #4CAF50;
+        .container {
+            background-color: #ffffff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            width: 100%;
+            max-width: 600px;
         }
 
         h2 {
-            color: #333;
-            border-bottom: 2px solid #4CAF50;
-            padding-bottom: 5px;
-            margin-bottom: 20px;
+            color: #333333;
+            text-align: center;
         }
 
         form {
-            background: #fff;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
         }
 
-        label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        input {
-            width: calc(100% - 20px);
-            padding: 8px 10px;
-            margin-bottom: 10px;
+        input[type="text"], input[type="date"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
             border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
+            border-radius: 5px;
         }
 
         button {
-            background: #4CAF50;
+            background-color: #007BFF;
             color: white;
-            padding: 10px 20px;
+            padding: 10px 15px;
             border: none;
-            border-radius: 4px;
+            border-radius: 5px;
             cursor: pointer;
-            font-size: 16px;
         }
 
         button:hover {
-            background: #45a049;
+            background-color: #0056b3;
         }
 
-        #vehicle-info, #ticket-message {
-            background: #fff;
-            padding: 15px;
+        fieldset {
             border: 1px solid #ddd;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            white-space: pre-wrap;
-            word-wrap: break-word;
+            padding: 10px;
+            border-radius: 5px;
         }
 
-        #vehicle-info {
-            margin-bottom: 20px;
+        legend {
+            font-weight: bold;
+        }
+
+        p {
+            margin: 5px 0;
+        }
+
+        img {
+            display: block;
+            margin: 10px auto;
+        }
+
+        .alert {
+            color: red;
+            text-align: center;
         }
     </style>
 </head>
 <body>
-    <h1>車輛違規查詢與罰單生成</h1>
+    <div class="container">
+        <h2>開單系統</h2>
 
-    <h2>查詢車輛資訊</h2>
-    <form id="search-form">
-        <label for="license-plate">車牌號碼：</label>
-        <input type="text" id="license-plate" required>
-        <button type="submit">查詢</button>
-    </form>
-    <div id="vehicle-info"></div>
+        <form method="get">
+            車牌: <input type="text" name="license_plate" value="{{ license_plate }}">
+            <button type="submit">搜尋</button>
+        </form>
 
-    <h2>生成罰單</h2>
-    <form id="ticket-form">
-        <label for="violation-reason">違規原因：</label>
-        <input type="text" id="violation-reason" required><br>
-        <label for="fine-amount">罰款金額：</label>
-        <input type="number" id="fine-amount" required><br>
-        <button type="submit">生成罰單</button>
-    </form>
-    <div id="ticket-message"></div>
+        <hr>
+        {% if person_data %}
+            <p>車牌: {{ person_data['license_plate'] }}</p>
+            <p>姓名: {{ person_data['owner_name'] }}</p>
+            <p>手機: {{ person_data['phone'] }}</p>
+            <p>性別: {{ person_data['gender'] }}</p>
+            <p>生日: {{ person_data['birth_date'] }}</p>
+            <p>地址: {{ person_data['address'] }}</p>
+            <p>掛牌日期: {{ person_data['registration_date'] }}</p>
+            {% if person_data['photo_url'] %}
+                <img src="{{ person_data['photo_url'] }}" alt="車主照片" width="200">
+            {% endif %}
+        {% else %}
+            <p class="alert">沒有查到車主資料</p>
+        {% endif %}
 
+        <fieldset>
+            <legend>違規紀錄(最新一筆)</legend>
+            {% if violation_data %}
+                <p>
+                    日期: {{ violation_data['date'] }}<br>
+                    地點: {{ violation_data['location'] }}<br>
+                    描述: {{ violation_data['description'] }}<br>
+                    罰款: {{ violation_data['fine_amount'] }}
+                </p>
+            {% else %}
+                <p class="alert">目前沒有違規紀錄</p>
+            {% endif %}
+        </fieldset>
+
+        <hr>
+        <form action="/generate_fine" method="POST" onsubmit="return handleSubmit(event)">
+            <input type="hidden" name="license_plate" value="{{ license_plate }}">
+            <input type="hidden" name="owner_name" value="{{ person_data['owner_name'] if person_data }}">
+            
+            日期: <input type="date" name="date" required><br>
+            地點: <input type="text" name="location" required><br>
+            描述: <input type="text" name="description" required><br>
+            罰款: <input type="number" name="fine_amount" required><br>
+            <button type="submit">生成罰單</button>
+        </form>
+    </div>
     <script>
-        // 查詢車輛資訊
-        document.getElementById('search-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const licensePlate = document.getElementById('license-plate').value;
-            const response = await fetch(`/vehicle-info?license_plate=${licensePlate}`);
-            if (response.ok) {
-                const data = await response.json();
-                const violations = data.violations.map(v => `違規原因: ${v.description}\n罰款金額: ${v.fine_amount}`).join("\n\n");
-                document.getElementById('vehicle-info').innerText = `車牌號碼: ${data.license_plate}\n\n${violations}`;
-            } else {
-                document.getElementById('vehicle-info').innerText = "查無此車輛資料";
-            }
-        });
-
-        // 生成罰單
-        document.getElementById('ticket-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const licensePlate = document.getElementById('license-plate').value;
-            const violationReason = document.getElementById('violation-reason').value;
-            const fineAmount = document.getElementById('fine-amount').value;
-            const response = await fetch('/generate-ticket', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    license_plate: licensePlate,
-                    vehicle_type: "轎車", // 示例值，可根據需求動態填充
-                    owner_name: "張三",   // 示例值，可根據需求動態填充
-                    description: violationReason,
-                    fine_amount: fineAmount
+        function handleSubmit(ev) {
+            ev.preventDefault();
+            const formData = new FormData(ev.target);
+            fetch(ev.target.action, {method: 'POST', body: formData})
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert("罰單生成成功！");
+                    } else {
+                        alert("生成失敗: " + (data.message || "不明原因"));
+                    }
                 })
-            });
-            const data = await response.json();
-            if (response.ok) {
-                document.getElementById('ticket-message').innerHTML = `
-                    罰單生成成功！<br>
-                    <a href="/download/${data.pdf_file}" target="_blank">下載罰單</a>
-                `;
-            } else {
-                document.getElementById('ticket-message').innerText = "罰單生成失敗";
-            }
-        });
+                .catch(err => alert("錯誤: " + err));
+        }
     </script>
 </body>
 </html>

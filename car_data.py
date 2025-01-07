@@ -51,7 +51,11 @@ def index():
                 'birth_date': person_data[4],
                 'address': person_data[5],
                 'registration_date': person_data[6],
-                'photo_url': person_data[7]
+                'photo_url': person_data[7],
+                'vehicle_model': person_data[8],
+                'vehicle_color': person_data[9],
+                'vehicle_brand': person_data[10]
+                
             }
         
         # 將違規紀錄轉換為字典格式列表

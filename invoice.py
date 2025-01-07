@@ -1,80 +1,125 @@
-import os
+from flask import Flask, request, render_template, jsonify
 import psycopg2
-from flask import Flask, request, render_template, jsonify, send_from_directory
-from fpdf import FPDF
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+import os
 
 app = Flask(__name__)
 
-# 檢查並創建存放罰單的目錄
-if not os.path.exists("tickets"):
-    os.mkdir("tickets")
-
-# 連接到 PostgreSQL 資料庫
 def get_db_connection():
-    return psycopg2.connect(
-        host="localhost",
-        user="postgres",
-        password="1234",  # 這裡填入你的 PostgreSQL 密碼
-        dbname="violations_db"
-    )
+    try:
+        return psycopg2.connect(
+            host="localhost",
+            user="postgres",
+            password="1234",
+            database="violations_db"
+        )
+    except Exception as e:
+        print(f"資料庫連線失敗: {e}")
+        return None
 
 @app.route('/')
 def index():
-    return render_template('invoice.html')  # 導向 HTML 網頁檔案
-
-@app.route('/vehicle-info', methods=['GET'])
-def get_vehicle_info():
-    license_plate = request.args.get('license_plate')
+    license_plate = request.args.get('license_plate', 'AAA-1234')
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT description, fine_amount FROM violation_records WHERE license_plate = %s", (license_plate,))
-    violations = cursor.fetchall()
-
-    if violations:
-        violations_list = []
-        for violation in violations:
-            violations_list.append({
-                'description': violation[0],
-                'fine_amount': violation[1]
-            })
+    if conn:
+        cursor = conn.cursor()
+        
+        # 車主資料
+        cursor.execute('SELECT * FROM vehicle_owner_info WHERE license_plate=%s', (license_plate,))
+        person_data_row = cursor.fetchone()
+        
+        if person_data_row:
+            # 依你表格欄位順序對應
+            person_data = {
+                'license_plate': person_data_row[0],
+                'owner_name':    person_data_row[1],
+                'phone':         person_data_row[2],
+                'gender':        person_data_row[3],
+                'birth_date':    person_data_row[4],
+                'address':       person_data_row[5],
+                'registration_date': person_data_row[6],
+                'photo_url':     person_data_row[7]
+            }
+        else:
+            person_data = None
+        
+        # 只抓 violation_records 裡最新一筆
+        cursor.execute('''
+            SELECT *
+            FROM violation_records
+            WHERE license_plate = %s
+            ORDER BY date DESC
+            LIMIT 1
+        ''', (license_plate,))
+        row = cursor.fetchone()
+        
+        if row:
+            violation_data = {
+                'date': row[3],
+                'location': row[4],
+                'description': row[5],
+                'fine_amount': row[6]
+            }
+        else:
+            violation_data = None
+        
         cursor.close()
         conn.close()
-
-        return jsonify({'license_plate': license_plate, 'violations': violations_list})
     else:
+        person_data = None
+        violation_data = None
+
+    return render_template('invoice.html',
+                           license_plate=license_plate,
+                           person_data=person_data,
+                           violation_data=violation_data)
+
+@app.route('/generate_fine', methods=['POST'])
+def generate_fine():
+    license_plate = request.form.get('license_plate')
+    owner_name    = request.form.get('owner_name')
+    date          = request.form.get('date')
+    location      = request.form.get('location')
+    description   = request.form.get('description')
+    fine_amount   = request.form.get('fine_amount')
+    
+    conn = get_db_connection()
+    if conn:
+        cursor = conn.cursor()
+        # 新增一筆
+        cursor.execute('''
+            INSERT INTO violation_records (license_plate, owner_name, date, location, description, fine_amount)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        ''', (license_plate, owner_name, date, location, description, fine_amount))
+        conn.commit()
         cursor.close()
         conn.close()
-        return jsonify({"error": "查無此車輛資料"}), 404
 
-@app.route('/generate-ticket', methods=['POST'])
-def generate_ticket():
-    data = request.json
-    license_plate = data.get("license_plate")
-    owner_name = data.get("owner_name")
-    description = data.get("description")
-    fine_amount = data.get("fine_amount")
+        # 產生PDF
+        file_name = generate_pdf(license_plate, owner_name, date, location, description, fine_amount)
+        
+        # 在Windows自動開啟
+        if os.name == 'nt':
+            os.startfile(file_name)
 
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.add_font('msyh', '', 'msyh.ttf', uni=True)  # 使用支持中文的字體
-    pdf.set_font('msyh', '', 12)
+        return jsonify(success=True, file_name=file_name)
+    else:
+        return jsonify(success=False, message="連線資料庫失敗")
 
-    pdf.cell(200, 10, txt="交通違規罰單", ln=True, align='C')
-    pdf.ln(10)
-    pdf.cell(0, 10, f"車牌號碼: {license_plate}", ln=True)
-    pdf.cell(0, 10, f"車主姓名: {owner_name}", ln=True)
-    pdf.cell(0, 10, f"違規原因: {description}", ln=True)
-    pdf.cell(0, 10, f"罰款金額: {fine_amount} 元", ln=True)
-
-    # 保存 PDF 文件
-    pdf_file = f"tickets/{license_plate}_ticket.pdf"
-    pdf.output(pdf_file, dest='F')
-
-    return jsonify({"message": "罰單生成成功", "pdf_file": pdf_file}), 200
-
-@app.route('/download/<path:filename>', methods=['GET'])
-def download_file(filename):
-    return send_from_directory('tickets', filename, as_attachment=True)
+def generate_pdf(plate, owner, date, loc, desc, fine):
+    file_name = f"{plate}_violation_ticket.pdf"
+    c = canvas.Canvas(file_name, pagesize=letter)
+    c.drawString(100, 750, f"License Plate: {plate}")
+    c.drawString(100, 730, f"Owner Name: {owner}")
+    c.drawString(100, 710, f"Date: {date}")
+    c.drawString(100, 690, f"Location: {loc}")
+    c.drawString(100, 670, f"Description: {desc}")
+    c.drawString(100, 650, f"Fine Amount: {fine}")
+    c.showPage()
+    c.save()
+    print(f"PDF 生成: {file_name}")
+    return file_name
 
 if __name__ == '__main__':
     app.run(debug=True)
