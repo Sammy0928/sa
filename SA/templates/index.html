@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Photo</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: 'Times New Roman', Times, serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .upload-container {
+            text-align: center;
+            background-color: #2d2d2d;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(68, 62, 62, 0.5);
+            width: 500px;
+        }
+        .upload-container h1 {
+            margin-bottom: 20px;
+        }
+        .upload-container input[type="file"] {
+            display: none;
+        }
+        .upload-container label {
+            background-color: #4e4e4e;
+            color: #ffffff;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        .upload-container label:hover {
+            background-color: #2632bf;
+        }
+        .upload-container img {
+            width: 300px;
+            height: 300px;
+            object-fit: cover;
+            margin: 20px auto 0 auto;
+            border-radius: 10px;
+            display: none;
+        }
+        .upload-container button {
+            background-color: #4e4e4e;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        .upload-container button:hover {
+            background-color: #2632bf;
+        }
+        .file-name {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="upload-container">
+        <h1>進行車牌辨識</h1>
+        <label for="photoInput">上傳車牌照片</label>
+        <input type="file" id="photoInput" accept="image/*"><br>
+        <div class="file-name" id="fileName">(未選擇任何檔案)</div>
+        <img id="photoPreview" src="" alt="Photo Preview"><br>
+        車牌辨識結果：<br>
+        <div id="recognitionResult" style="margin-top: 20px;"></div>
+        <center><button id="reuploadButton" style="display:none;" onclick="reupload()">重新上傳</button></center>
+    </div>
+
+    <script>
+        document.getElementById('photoInput').addEventListener('change', async function(event) {
+            const file = event.target.files[0];
+            const fileNameDiv = document.getElementById('fileName');
+            const recognitionResultDiv = document.getElementById('recognitionResult');
+
+            if (file) {
+                fileNameDiv.textContent = file.name;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById('photoPreview');
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                    document.getElementById('reuploadButton').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+
+                // Upload the file to the server and process it
+                const formData = new FormData();
+                formData.append('image', file);
+
+                try {
+                    const response = await fetch('/process_image', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        recognitionResultDiv.textContent = `車牌：${result.plate || '無法辨識'}`;
+                    } else {
+                        recognitionResultDiv.textContent = '無法辨識，請重試';
+                    }
+                } catch (error) {
+                    recognitionResultDiv.textContent = '發生錯誤，請檢查伺服器是否運行';
+                }
+            } else {
+                fileNameDiv.textContent = '未選擇任何檔案';
+            }
+        });
+
+        function reupload() {
+            document.getElementById('photoInput').value = '';
+            document.getElementById('fileName').textContent = '未選擇任何檔案';
+            document.getElementById('photoPreview').style.display = 'none';
+            document.getElementById('recognitionResult').textContent = '';
+            document.getElementById('reuploadButton').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
