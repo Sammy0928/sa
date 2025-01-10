@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新增違規紀錄</title>
+    <style>
+        body {
+            background-color: #121212;
+            margin: 0;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        header {
+            padding: 30px;
+            background-color: #121212;
+            color: #ffffff;
+            text-align: center;
+        }
+        main {
+            background-color: #2d2d2d;
+            color: #ffffff;
+            padding: 40px;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 600px;
+            box-sizing: border-box;
+        }
+        input[type="text"], input[type="date"], input[type="file"] {
+            width: calc(100% - 20px);
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        button:disabled {
+            background-color: #808080;
+            cursor: not-allowed;
+        }
+        .back-button {
+            margin-top: 20px;
+            background-color: #333;
+            color: #e0e0e0;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 10px 20px;
+        }
+        .back-button:hover {
+            background-color: #555;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+        .modal-content {
+            background-color: #ffffff;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            width: 80%;
+            max-width: 400px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>新增違規紀錄</h1>
+    </header>
+    <main>
+        <form id="recordForm" action="/violation/save_record" method="POST" enctype="multipart/form-data">
+            <label>車輛號碼：</label>
+            <input type="text" name="vehicle_number" required><br>
+            <label>車主名稱：</label>
+            <input type="text" name="owner_name" required><br>
+            <label>日期：</label>
+            <input type="date" name="date" value="2024-12-25" min="2020-01-01" max="2025-12-31" required><br>
+            <label>照片：</label>
+            <input type="file" name="photo"><br>
+            <label>事發地點：</label>
+            <input type="text" name="location"><br>
+            <label>行為描述：</label>
+            <input type="text" name="description"><br>
+            <label>罰款金額：</label><br>
+            <input type="radio" name="fine_amount" value="600">$600 
+            <input type="radio" name="fine_amount" value="1200">$1200 
+            <input type="radio" name="fine_amount" value="2000">$2000<br>
+            <button type="submit">確認</button>
+        </form>
+        <footer>
+            <button onclick="history.back()">返回上一頁</button>
+            <a href="/homepage"><button type="button">返回首頁</button></a>
+            <a href="/invoice"><button type="button">開單系統</button></a>
+        </footer>
+    </main>
+
+    <!-- Modal -->
+    <div id="successModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <p>資料已成功提交！</p>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById("successModal");
+
+        function showModal() {
+            modal.style.display = "block";
+        }
+
+        function closeModal() {
+            modal.style.display = "none";
+        }
+
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        document.getElementById('recordForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+
+            if (!formData.get('fine_amount')) {
+                alert('請選擇罰款金額！');
+                return;
+            }
+
+            fetch('/violation/save_record', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || '未知錯誤');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showModal();
+                    form.reset();
+                } else {
+                    alert('提交資料失敗，請重試。');
+                }
+            })
+            .catch(error => {
+                alert(`提交失敗，錯誤原因：${error.message}`);
+                console.error('提交失敗:', error);
+            });
+        });
+        document.addEventListener('DOMContentLoaded', () => {
+        // 從 localStorage 獲取車牌和車主姓名
+        const vehicleNumber = localStorage.getItem('vehicle_number');
+        const ownerName = localStorage.getItem('owner_name');
+
+        // 自動填充到表單欄位
+        if (vehicleNumber) {
+            document.querySelector('input[name="vehicle_number"]').value = vehicleNumber;
+        }
+        if (ownerName) {
+            document.querySelector('input[name="owner_name"]').value = ownerName;
+        }
+    });
+
+    document.getElementById('recordForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+
+        if (!formData.get('fine_amount')) {
+            alert('請選擇罰款金額！');
+            return;
+        }
+
+        fetch('/violation/save_record', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.error || '未知錯誤');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                showModal();
+                form.reset();
+            } else {
+                alert('提交資料失敗，請重試。');
+            }
+        })
+        .catch(error => {
+            alert(`提交失敗，錯誤原因：${error.message}`);
+            console.error('提交失敗:', error);
+        });
+    });
+    </script>
+</body>
+</html>
