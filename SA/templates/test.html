@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>開單系統</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+    }
+    form { display: flex; flex-direction: column; gap: 10px; }
+    button { padding: 10px; background-color: blue; color: white; border: none; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>開單系統</h1>
+  <form id="ticketForm">
+    <label>車牌號碼：<input type="text" id="plateNumber" required></label>
+    <label>違規類型：
+      <select id="violationType" required>
+        <option value="">請選擇</option>
+        <option value="超速">超速</option>
+        <option value="闖紅燈">闖紅燈</option>
+        <option value="違規停車">違規停車</option>
+      </select>
+    </label>
+    <label>違規時間：<input type="datetime-local" id="violationTime" required></label>
+    <label>違規地點：<input type="text" id="location" required></label>
+    <button type="button" onclick="generateTicket()">生成罰單</button>
+  </form>
+  <div id="result" style="margin-top: 20px; padding: 10px; border: 1px solid green;"></div>
+  <script>
+    function generateTicket() {
+      const plateNumber = document.getElementById("plateNumber").value;
+      const violationType = document.getElementById("violationType").value;
+      const violationTime = document.getElementById("violationTime").value;
+      const location = document.getElementById("location").value;
+
+      const resultDiv = document.getElementById("result");
+      resultDiv.innerHTML = `
+        <h2>罰單生成成功！</h2>
+        <p>車牌號碼：${plateNumber}</p>
+        <p>違規類型：${violationType}</p>
+        <p>違規時間：${violationTime}</p>
+        <p>違規地點：${location}</p>
+      `;
+    }
+  </script>
+</body>
+</html>

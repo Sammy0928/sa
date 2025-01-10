@@ -3,28 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Page</title>
+    <title>車牌辨識系統</title>
     <style>
         body {
-            background-color: #121212;
-            color: #ffffff;
-            font-family: 'Times New Roman', Times, serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
             margin: 0;
+            font-family: 'Times New Roman', Times, serif;
+            background-color: #121212;
+            color: #e0e0e0;
         }
-        .login-container {
+
+        header {
+            background-color: #1c1c1c;
+            color: #ffffff;
+            padding: 1.5rem 0;
             text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        nav {
             background-color: #252525;
+            padding: 10px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        nav a {
+            margin: 0 15px;
+            text-decoration: none;
+            color: #bbbbbb;
+            font-size: 1.2rem;
+            transition: color 0.3s ease;
+        }
+
+        nav a:hover {
+            color: #ffffff;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .login-container, .content-container {
+            text-align: center;
+            margin: 50px auto;
             padding: 30px;
             border-radius: 10px;
+            background-color: #252525;
             box-shadow: 0 0 10px rgba(68, 62, 62, 0.5);
+            max-width: 400px;
         }
-        .login-container h1 {
+
+        .login-container h1,
+        .content-container h1 {
             margin-bottom: 20px;
         }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 0 20px;
+        }
+
+        .form-group {
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #bbbbbb;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #4e4e4e;
+            border-radius: 4px;
+            background-color: #333;
+            color: #ffffff;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #cbcbcb;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+
         .login-container button {
             background-color: #4e4e4e;
             color: #ffffff;
@@ -33,17 +107,103 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
+            margin-top: 10px;
+            width: 100%;
+            transition: background-color 0.3s ease;
         }
+
         .login-container button:hover {
-            background-color: #2632bf;
+            background-color: #bcbcbc;
+        }
+
+        .content-container {
+            max-width: 800px;
+            padding: 30px;
+            margin-top: 100px;
+           
+        }
+
+        .content-container p {
+            font-size: 1.2rem;
+            line-height: 1.6;
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <h1>車牌辨識子系統</h1>
-        <h3>License plate recognition subsystem</h3>
-        <br><button onclick="window.location.href='/license'">進行辨識</button>
+    <!-- 頁首 -->
+    <header>
+        <h1>全國舉發案件處理系統</h1>
+    </header>
+
+    <!-- 登入區域 -->
+    <div id="login-page" class="login-container">
+        <h1>登入</h1>
+        <form class="login-form" onsubmit="return handleLogin(event)">
+            <div class="form-group">
+                <label for="username">帳號</label>
+                <input type="text" id="username" name="username" required>
+                <div class="error-message" id="username-error">請輸入帳號</div>
+            </div>
+            <div class="form-group">
+                <label for="password">密碼</label>
+                <input type="password" id="password" name="password" required>
+                <div class="error-message" id="password-error">請輸入密碼</div>
+            </div>
+            <button type="submit">登入系統</button>
+        </form>
     </div>
+
+    <!-- 主頁內容 -->
+    <div id="home-page" class="hidden">
+        <nav>
+            <a href="/license">AI辨識系統</a>
+            <a href="/identify">人工辨識</a>
+            <a href="/violation">違規紀錄</a>
+            <a href="/invoice">開單系統</a>
+            <a href="/car_data">車籍資料</a>
+        </nav>
+        <div class="content-container">
+            <p>歡迎來到主頁，請選擇您想進入的系統。</p>
+        </div>
+    </div>
+
+    <script>
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const usernameError = document.getElementById('username-error');
+            const passwordError = document.getElementById('password-error');
+            
+            // 重置錯誤訊息
+            usernameError.style.display = 'none';
+            passwordError.style.display = 'none';
+            
+            // 簡單的表單驗證
+            let hasError = false;
+            
+            if (!username) {
+                usernameError.style.display = 'block';
+                hasError = true;
+            }
+            
+            if (!password) {
+                passwordError.style.display = 'block';
+                hasError = true;
+            }
+            
+            if (hasError) {
+                return false;
+            }
+
+            // 這裡可以加入實際的登入驗證邏輯
+            // 目前僅供演示，直接允許登入
+            document.getElementById('login-page').classList.add('hidden');
+            document.getElementById('home-page').classList.remove('hidden');
+            
+            return false;
+        }
+    </script>
 </body>
 </html>

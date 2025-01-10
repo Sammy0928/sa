@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>車輛辨識系統</title>
+    <style>
+        /* 通用樣式 */
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background-color: #2d2d2d;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            width: 80%;
+            max-width: 800px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"], textarea, input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            background-color: #3d3d3d;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 5px;
+        }
+
+        input[type="radio"] {
+            margin-right: 10px;
+        }
+
+        #imagePreview {
+            display: none;
+            margin-top: 10px;
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+            border: 1px solid #ddd;
+            object-fit: contain;
+            background-color: #3d3d3d;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        button:disabled {
+            background-color: #808080;
+            cursor: not-allowed;
+        }
+
+        .message-box {
+            display: none;
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        .message-box.error {
+            background-color: #ff4d4d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>車輛辨識系統</h1>
+        <form id="recordForm" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="image">上傳車輛圖片:</label>
+                <input type="file" id="image" name="image" accept="image/*" onchange="previewImage(event)">
+                <img id="imagePreview" src="#" alt="圖片預覽" style="height: 300px; width: 300px;">
+            </div>
+
+            <div class="form-group">
+                <label for="license_plate">車牌:</label>
+                <input type="text" id="license_plate" name="license_plate" required>
+            </div>
+
+            <div class="form-group">
+                <label>車種:</label>
+                <input type="radio" name="car" value="sedan" required>小客車
+                <input type="radio" name="car" value="SUV" required>休旅車
+                <input type="radio" name="car" value="truck" required>貨車
+            </div>
+
+            <div class="form-group">
+                <label for="violation_reason">違規理由陳述:</label>
+                <textarea id="violation_reason" name="violation_reason" rows="4" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>辨識結果:</label>
+                <input type="radio" name="violation" value="no_violation" required>無違規
+                <input type="radio" name="violation" value="violation" required>違規
+            </div>
+
+            <div class="form-group">
+                <label for="reason">理由:</label>
+                <textarea id="reason" name="reason" rows="4">理由...</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="reviewer_signature">審查人員簽章:</label>
+                <input type="text" id="reviewer_signature" name="reviewer_signature">
+            </div>
+
+            <footer>
+                <button id="save" type="button" onclick="handleSubmit()">儲存</button>
+                <a href="/invoice"><button type="button">開單系統</button></a>
+                <button onclick="history.back()">返回上一頁</button>
+                <a href="/homepage"><button type="button">返回首頁</button></a>
+            </footer>
+        </form>
+    </div>
+
+    <div id="messageBox" class="message-box {{ 'error' if not message else '' }}" style="{{ 'display: block;' if message else 'display: none;' }}">
+        {{ message }}
+    </div>
+
+    <script>
+        function previewImage(event) {
+            const imagePreview = document.getElementById('imagePreview');
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    imagePreview.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                imagePreview.src = '#';
+                imagePreview.style.display = 'none';
+            }
+        }
+
+        async function handleSubmit() {
+    const form = document.getElementById('recordForm');
+    const formData = new FormData(form);
+    const messageBox = document.getElementById('messageBox');
+
+    try {
+        const response = await fetch('/identify/violation', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            messageBox.textContent = data.message || '資料已成功提交！';
+            messageBox.classList.remove('error');
+            form.reset();
+            document.getElementById('imagePreview').style.display = 'none';
+        } else {
+            messageBox.textContent = data.error || '提交失敗，請重試。';
+            messageBox.classList.add('error');
+        }
+
+        messageBox.style.display = 'block';
+
+        // 自动隐藏提示窗口
+        setTimeout(() => {
+            messageBox.style.display = 'none';
+        }, 3000);
+    } catch (error) {
+        console.error('Error submitting data:', error);
+        alert('提交失敗，請重試。');
+    }
+}
+
+    </script>
+</body>
+</html>
